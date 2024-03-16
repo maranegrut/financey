@@ -1,7 +1,5 @@
-import { useState, useEffect, ChangeEvent } from "react";
+import { useState, ChangeEvent } from "react";
 import "./App.css";
-
-// var fs = require("fs");
 
 type Expense = {
   Name: string;
@@ -10,12 +8,13 @@ type Expense = {
 
 function App() {
   const [file, setFile] = useState<File | undefined>();
-  const [myCosts, setMyCosts] = useState(0);
-  const [owedCosts, setOwedCosts] = useState(0);
+  const [myCosts, setMyCosts] = useState<number>(0);
+  const [owedCosts, setOwedCosts] = useState<number>(0);
 
   const [unsortedItems, setUnsortedItems] = useState<Expense[]>([]);
   const [personalItems, setPersonalItems] = useState<Expense[]>([]);
   const [sharedItems, setSharedItems] = useState<Expense[]>([]);
+  const [currentItemIndex, setCurrentItemIndex] = useState<number>(0);
 
   const convertCsvToJson = (csvData: any) => {
     const rows = csvData.split("\r\n");
@@ -30,16 +29,32 @@ function App() {
       }
       data.push(obj);
     }
-    console.log("JSON DATA", data);
     return data as Expense[];
   };
 
-  const addToMyCosts = (cost: number) => {
+  const addToMyCosts = () => {
+    const cost = Number(unsortedItems[currentItemIndex].Cost);
     setMyCosts((prev) => prev + cost);
+
+    setPersonalItems([...personalItems, unsortedItems[currentItemIndex]]);
+    setCurrentItemIndex((prev) => prev + 1);
   };
-  const addToOwedCosts = (cost: number) => {
-    setMyCosts((prev) => prev + cost / 2);
-    setOwedCosts((prev) => prev + cost / 2);
+
+  const addToSharedCosts = () => {
+    const cost = Number(unsortedItems[currentItemIndex].Cost);
+    setMyCosts((prev) => prev + Number((cost / 2).toFixed(2)));
+    setOwedCosts((prev) => prev + Number((cost / 2).toFixed(2)));
+
+    setSharedItems([...sharedItems, unsortedItems[currentItemIndex]]);
+    setCurrentItemIndex((prev) => prev + 1);
+  };
+
+  const handleAddItem = (name: string, cost: number) => {
+    const newItem = {
+      Name: name,
+      Cost: Number(cost.toFixed(2)),
+    };
+    setUnsortedItems([...unsortedItems, newItem]);
   };
 
   const handleFileChange = (event: any) => {
@@ -75,48 +90,68 @@ function App() {
             </p>
           </header>
           <div className="w-full flex flex-col items-center justify-center gap-8">
-            {unsortedItems.length > 0 && (
-              <div className="w-full flex flex-col items-center justify-center relative">
-                <UnsortedExpense
-                  title={unsortedItems[unsortedItems.length - 1].Name}
-                  price={`$${unsortedItems[unsortedItems.length - 1].Cost}`}
-                />
-                <div className="absolute bottom-0 left-0 right-0 flex justify-between px-4 py-2">
-                  <button className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-full shadow">
-                    Just Me
-                  </button>
-                  <button className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-full shadow">
-                    Shared
-                  </button>
+            {unsortedItems.length > 0 &&
+              currentItemIndex < unsortedItems.length && (
+                <div className="w-full flex flex-col items-center justify-center relative">
+                  <UnsortedExpense
+                    title={unsortedItems[currentItemIndex].Name}
+                    price={unsortedItems[currentItemIndex].Cost}
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 flex justify-between px-4 py-2">
+                    <button
+                      onClick={addToMyCosts}
+                      className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-full shadow"
+                    >
+                      Just Me
+                    </button>
+                    <button
+                      onClick={addToSharedCosts}
+                      className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-full shadow"
+                    >
+                      Shared
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
-
-            <NewItemForm />
+              )}
+            <NewItemForm onSubmit={handleAddItem} />
           </div>
           <div className="w-full flex justify-between gap-8">
             <div className="flex-1">
               <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">
                 Personal Items
               </h2>
-              <div className="flex flex-col gap-4">
-                <SortedExpense title="Leather Wallet" price="$89.99" />
-                <SortedExpense
-                  title="Noise Cancelling Headphones"
-                  price="$199.99"
-                />
-              </div>
+              {personalItems.length > 0 && (
+                <div className="flex flex-col gap-4">
+                  {personalItems.map((item, index) => (
+                    <SortedExpense
+                      key={index}
+                      title={item.Name}
+                      price={item.Cost}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
             <div className="flex-1">
               <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">
                 Shared Items
               </h2>
-              <SortedExpense title="Smart TV" price="$499.99" />
+              {sharedItems.length > 0 && (
+                <div className="flex flex-col gap-4">
+                  {sharedItems.map((item, index) => (
+                    <SortedExpense
+                      key={index}
+                      title={item.Name}
+                      price={item.Cost}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           <div className="w-full flex justify-between gap-8 mt-8">
-            <CategorySummary categoryName="Spent on me" amount="$589.98" />
-            <CategorySummary categoryName="Owed to me" amount="$499.99" />
+            <CategorySummary categoryName="Spent on me" amount={myCosts} />
+            <CategorySummary categoryName="Owed to me" amount={owedCosts} />
           </div>
           <FileUpload
             onFileChange={handleFileChange}
@@ -133,7 +168,7 @@ function App() {
 
 type ExpenseProps = {
   title: string;
-  price: string;
+  price: number;
 };
 
 const UnsortedExpense = ({ title, price }: ExpenseProps) => {
@@ -142,7 +177,7 @@ const UnsortedExpense = ({ title, price }: ExpenseProps) => {
       <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
         {title}
       </h2>
-      <p className="text-xl text-gray-600 dark:text-gray-400">{price}</p>
+      <p className="text-xl text-gray-600 dark:text-gray-400">{`${price}`}</p>
     </div>
   );
 };
@@ -154,29 +189,49 @@ const SortedExpense = ({ title, price }: ExpenseProps) => {
         <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">
           {title}
         </h3>
-        <p className="text-gray-600 dark:text-gray-400">{price}</p>
+        <p className="text-gray-600 dark:text-gray-400">{`${price}`}</p>
       </div>
     </div>
   );
 };
 
-const NewItemForm = () => {
+type NewItemFormProps = {
+  onSubmit: (name: string, price: number) => void;
+};
+
+const NewItemForm = ({ onSubmit }: NewItemFormProps) => {
+  const [name, setName] = useState<string>("");
+  const [price, setPrice] = useState<string>("");
+
   return (
     <div className="w-full max-w-[400px] bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-4 flex flex-col gap-4">
       <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
         Create New Item
       </h2>
       <input
+        onChange={(e) => setName(e.target.value)}
+        value={name}
         className="border-2 border-gray-300 dark:border-gray-600 rounded-md py-2 px-4 text-gray-800 dark:text-gray-100 bg-transparent"
         placeholder="Item Name"
         type="text"
       />
       <input
+        onChange={(e) => setPrice(e.target.value)}
+        value={price}
         className="border-2 border-gray-300 dark:border-gray-600 rounded-md py-2 px-4 text-gray-800 dark:text-gray-100 bg-transparent"
         placeholder="Price"
         type="number"
       />
-      <button className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full shadow">
+      <button
+        onClick={() => {
+          if (name && price) {
+            onSubmit(name, Number(price));
+            setName("");
+            setPrice("");
+          }
+        }}
+        className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full shadow"
+      >
         Add Item
       </button>
     </div>
@@ -212,7 +267,7 @@ const FileUpload = ({ onFileChange, onFileUpload }: FileUploadProps) => {
 
 type CategorySummaryProps = {
   categoryName: string;
-  amount: string;
+  amount: number;
 };
 
 const CategorySummary = ({ categoryName, amount }: CategorySummaryProps) => {
@@ -222,7 +277,7 @@ const CategorySummary = ({ categoryName, amount }: CategorySummaryProps) => {
         {categoryName}
       </h2>
       <p className="text-3xl font-bold text-gray-800 dark:text-gray-100">
-        {amount}
+        {`$${amount}`}
       </p>
     </div>
   );
