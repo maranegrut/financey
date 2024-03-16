@@ -4,6 +4,7 @@ import "./App.css";
 type Expense = {
   Name: string;
   Cost: number;
+  Date: string;
 };
 
 function App() {
@@ -53,6 +54,7 @@ function App() {
     const newItem = {
       Name: name,
       Cost: Number(cost.toFixed(2)),
+      Date: "N/A",
     };
     setUnsortedItems([...unsortedItems, newItem]);
   };
@@ -96,6 +98,7 @@ function App() {
                   <UnsortedExpense
                     title={unsortedItems[currentItemIndex].Name}
                     price={unsortedItems[currentItemIndex].Cost}
+                    date={unsortedItems[currentItemIndex].Date}
                   />
                   <div className="absolute bottom-0 left-0 right-0 flex justify-between px-4 py-2">
                     <button
@@ -127,6 +130,7 @@ function App() {
                       key={index}
                       title={item.Name}
                       price={item.Cost}
+                      date={item.Date}
                     />
                   ))}
                 </div>
@@ -143,6 +147,7 @@ function App() {
                       key={index}
                       title={item.Name}
                       price={item.Cost}
+                      date={item.Date}
                     />
                   ))}
                 </div>
@@ -169,20 +174,24 @@ function App() {
 type ExpenseProps = {
   title: string;
   price: number;
+  date: string;
 };
 
-const UnsortedExpense = ({ title, price }: ExpenseProps) => {
+const UnsortedExpense = ({ title, price, date }: ExpenseProps) => {
   return (
     <div className="w-full max-w-[400px] bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden p-4 flex flex-col gap-4">
       <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
         {title}
       </h2>
       <p className="text-xl text-gray-600 dark:text-gray-400">{`${price}`}</p>
+      <p className="text-sm text-gray-400 dark:text-gray-600">
+        {`Date: ${date}`}
+      </p>
     </div>
   );
 };
 
-const SortedExpense = ({ title, price }: ExpenseProps) => {
+const SortedExpense = ({ title, price, date }: ExpenseProps) => {
   return (
     <div className="flex flex-col gap-4">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
@@ -190,6 +199,9 @@ const SortedExpense = ({ title, price }: ExpenseProps) => {
           {title}
         </h3>
         <p className="text-gray-600 dark:text-gray-400">{`${price}`}</p>
+        <p className="text-sm text-gray-400 dark:text-gray-600">
+          {`Date: ${date}`}
+        </p>
       </div>
     </div>
   );
