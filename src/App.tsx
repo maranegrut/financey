@@ -2,9 +2,9 @@ import { useState, ChangeEvent } from "react";
 import "./App.css";
 
 type Expense = {
-  Name: string;
-  Cost: number;
-  Date: string;
+  name: string;
+  cost: number;
+  date: string;
 };
 
 function App() {
@@ -20,21 +20,36 @@ function App() {
   const convertCsvToJson = (csvData: any) => {
     const rows = csvData.split("\r\n");
     const headers = rows[0].split(",");
+    headers.forEach((header: string) => header.split(" ").join(""));
+
     const data = [];
     for (let i = 1; i < rows.length; i++) {
       const rowData = rows[i].split(",");
       const obj: Partial<Expense> = {};
       for (let j = 0; j < headers.length; j++) {
-        let header = headers[j] as keyof Expense;
-        obj[header] = rowData[j];
+        let header = headers[j];
+        switch (header) {
+          case "Transaction Date":
+            obj.date = rowData[j];
+            break;
+          case "Description":
+            obj.name = rowData[j];
+            break;
+          case "Amount":
+            obj.cost = Number(rowData[j]) * -1;
+            break;
+          default:
+            break;
+        }
       }
       data.push(obj);
     }
+    console.log("DATA", data);
     return data as Expense[];
   };
 
   const addToMyCosts = () => {
-    const cost = Number(unsortedItems[currentItemIndex].Cost);
+    const cost = Number(unsortedItems[currentItemIndex].cost);
     setMyCosts((prev) => prev + cost);
 
     setPersonalItems([...personalItems, unsortedItems[currentItemIndex]]);
@@ -42,7 +57,7 @@ function App() {
   };
 
   const addToSharedCosts = () => {
-    const cost = Number(unsortedItems[currentItemIndex].Cost);
+    const cost = Number(unsortedItems[currentItemIndex].cost);
     setMyCosts((prev) => prev + Number((cost / 2).toFixed(2)));
     setOwedCosts((prev) => prev + Number((cost / 2).toFixed(2)));
 
@@ -52,9 +67,9 @@ function App() {
 
   const handleAddItem = (name: string, cost: number) => {
     const newItem = {
-      Name: name,
-      Cost: Number(cost.toFixed(2)),
-      Date: "N/A",
+      name: name,
+      cost: Number(cost.toFixed(2)),
+      date: "N/A",
     };
     setUnsortedItems([...unsortedItems, newItem]);
   };
@@ -96,9 +111,9 @@ function App() {
               currentItemIndex < unsortedItems.length && (
                 <div className="w-full flex flex-col items-center justify-center relative">
                   <UnsortedExpense
-                    title={unsortedItems[currentItemIndex].Name}
-                    price={unsortedItems[currentItemIndex].Cost}
-                    date={unsortedItems[currentItemIndex].Date}
+                    title={unsortedItems[currentItemIndex].name}
+                    price={unsortedItems[currentItemIndex].cost}
+                    date={unsortedItems[currentItemIndex].date}
                   />
                   <div className="absolute bottom-0 left-0 right-0 flex justify-between px-4 py-2">
                     <button
@@ -128,9 +143,9 @@ function App() {
                   {personalItems.map((item, index) => (
                     <SortedExpense
                       key={index}
-                      title={item.Name}
-                      price={item.Cost}
-                      date={item.Date}
+                      title={item.name}
+                      price={item.cost}
+                      date={item.date}
                     />
                   ))}
                 </div>
@@ -145,9 +160,9 @@ function App() {
                   {sharedItems.map((item, index) => (
                     <SortedExpense
                       key={index}
-                      title={item.Name}
-                      price={item.Cost}
-                      date={item.Date}
+                      title={item.name}
+                      price={item.cost}
+                      date={item.date}
                     />
                   ))}
                 </div>
