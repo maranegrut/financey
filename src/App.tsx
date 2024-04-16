@@ -44,7 +44,6 @@ function App() {
       }
       data.push(obj);
     }
-    console.log("DATA", data);
     return data as Expense[];
   };
 
@@ -56,12 +55,24 @@ function App() {
     setCurrentItemIndex((prev) => prev + 1);
   };
 
+  const addToTheirCosts = () => {
+    const cost = Number(unsortedItems[currentItemIndex].cost);
+    setOwedCosts((prev) => prev + cost);
+
+    setSharedItems([...sharedItems, unsortedItems[currentItemIndex]]);
+    setCurrentItemIndex((prev) => prev + 1);
+  };
+
   const addToSharedCosts = () => {
     const cost = Number(unsortedItems[currentItemIndex].cost);
     setMyCosts((prev) => prev + Number((cost / 2).toFixed(2)));
     setOwedCosts((prev) => prev + Number((cost / 2).toFixed(2)));
 
     setSharedItems([...sharedItems, unsortedItems[currentItemIndex]]);
+    setCurrentItemIndex((prev) => prev + 1);
+  };
+
+  const skip = () => {
     setCurrentItemIndex((prev) => prev + 1);
   };
 
@@ -115,18 +126,30 @@ function App() {
                     price={unsortedItems[currentItemIndex].cost}
                     date={unsortedItems[currentItemIndex].date}
                   />
-                  <div className="absolute bottom-0 left-0 right-0 flex justify-between px-4 py-2">
+                  <div className=" px-4 py-2">
                     <button
                       onClick={addToMyCosts}
-                      className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-full shadow"
+                      className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 mx-2 rounded-full shadow"
                     >
                       Just Me
                     </button>
                     <button
                       onClick={addToSharedCosts}
-                      className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-full shadow"
+                      className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 mx-2 rounded-full shadow"
                     >
                       Shared
+                    </button>
+                    <button
+                      onClick={addToTheirCosts}
+                      className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 mx-2 rounded-full shadow"
+                    >
+                      Not Me
+                    </button>
+                    <button
+                      onClick={skip}
+                      className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 mx-2 rounded-full shadow"
+                    >
+                      Skip
                     </button>
                   </div>
                 </div>
